@@ -1,0 +1,10 @@
+services:
+  - type: web
+    name: ysr-monthly-reporting
+    runtime: node
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: AIRTABLE_TOKEN
+        sync: false        # set this in the Render dashboard (kept secret, never in the repo)
