@@ -107,6 +107,7 @@ footer{text-align:center;color:var(--ink2);font-size:12px;margin-top:30px;}
 <button class="btn sec" id="entryBtn" disabled>+ Monthly Entry</button>
 <button class="btn sec" id="printBtn" disabled>⬇ Export PDF</button>
 <button class="btn sec" id="csvBtn" disabled>⬇ Export CSV</button>
+<button class="btn sec" id="htmlBtn" disabled>⬇ Export HTML</button>
 </div></div>
 <div id="status">Loading report from the server…</div>
 
@@ -469,7 +470,7 @@ async function doLoad(){
     if(!YEARS.length){ setStatus("Connected, but the Monthly Report table is empty.", true); $("load").disabled=false; return; }
     fillThrough();
     render();
-    ["entryBtn","printBtn","csvBtn"].forEach(id=>$(id).disabled=false);
+    ["entryBtn","printBtn","csvBtn","htmlBtn"].forEach(id=>$(id).disabled=false);
     setStatus(`Loaded ${YEARS.length} year(s): ${YEARS.join(", ")}. Towing overlaid live from your towing log. Press Refresh to reload.`);
   }catch(e){
     console.error(e);
@@ -481,6 +482,7 @@ $("load").addEventListener("click", doLoad);
 $("throughSel").addEventListener("change", e=>{ THROUGH=+e.target.value; if(YEARS.length) render(); });
 $("printBtn").addEventListener("click", ()=>window.print());
 $("csvBtn").addEventListener("click", exportCSV);
+$("htmlBtn").addEventListener("click", exportHTML);
 
 /* ---- Manual entry ---- */
 $("entryBtn").addEventListener("click", ()=>{
@@ -525,6 +527,36 @@ function exportCSV(){
   const blob=new Blob([rows.join("\n")],{type:"text/csv"});
   const a=document.createElement("a"); a.href=URL.createObjectURL(blob);
   a.download=`YSR_Monthly_Report_${currentYear()}.csv`; a.click();
+}
+
+/* ---- HTML export: self-contained snapshot (charts baked in as images) ---- */
+function exportHTML(){
+  const styleEl=document.querySelector('style');
+  const headerEl=document.querySelector('header.top');
+  const navEl=document.querySelector('nav.toc');
+  const rep=document.getElementById('report');
+  if(!rep||rep.classList.contains('hidden')){ alert('Load the report first, then export.'); return; }
+  const clone=rep.cloneNode(true);
+  const oc=rep.querySelectorAll('canvas');
+  const cc=clone.querySelectorAll('canvas');
+  cc.forEach((c,i)=>{
+    let src=''; try{ src=oc[i]?oc[i].toDataURL('image/png'):''; }catch(e){}
+    const img=document.createElement('img'); img.src=src;
+    img.style.width='100%'; img.style.height='auto'; img.style.display='block';
+    const wrap=c.parentNode; wrap.style.height='auto'; wrap.style.position='static';
+    wrap.replaceChild(img,c);
+  });
+  const win = document.getElementById('hdr-sub') ? document.getElementById('hdr-sub').textContent : '';
+  const doc='<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8">'+
+    '<meta name="viewport" content="width=device-width, initial-scale=1.0">'+
+    '<title>Monthly Operations Report — Year-over-Year</title>'+styleEl.outerHTML+
+    '</head><body>'+headerEl.outerHTML+(navEl?navEl.outerHTML:'')+
+    '<div class="wrap">'+clone.innerHTML+'</div>'+
+    '<footer>YourSpotRented — Monthly Operations Report · self-contained export · '+win+'</footer>'+
+    '</body></html>';
+  const blob=new Blob([doc],{type:'text/html'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
+  a.download='YSR_Monthly_Report_'+currentYear()+'.html'; a.click();
 }
 
 /* ---- init: auto-load from server ---- */
