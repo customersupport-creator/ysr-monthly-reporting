@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>YourSpotRented — Monthly Reporting Tool</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root{--ink:#1f2733;--ink2:#5a6473;--line:#e3e8ef;--bg:#f4f6f9;--card:#fff;--navy:#1f3a68;--blue:#4c7bd1;--up:#1f7a4d;--down:#c0392b;}
+*{box-sizing:border-box;}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:'Segoe UI',-apple-system,Roboto,Helvetica,Arial,sans-serif;line-height:1.5;}
+.wrap{max-width:1080px;margin:0 auto;padding:0 22px 60px;}
+header.top{background:linear-gradient(135deg,#1f3a68,#2f5596);color:#fff;padding:34px 22px 28px;}
+header.top .inner{max-width:1080px;margin:0 auto;}
+header.top .ey{text-transform:uppercase;letter-spacing:2px;font-size:12px;color:#bcd0f0;font-weight:600;}
+header.top h1{margin:6px 0 4px;font-size:28px;font-weight:700;}
+header.top p{margin:0;color:#d7e3f7;font-size:14px;}
+/* Controls */
+.controls{background:#fff;border-bottom:1px solid var(--line);box-shadow:0 1px 4px rgba(0,0,0,.04);}
+.controls .inner{max-width:1080px;margin:0 auto;display:flex;flex-wrap:wrap;align-items:center;gap:10px;padding:12px 22px;}
+.controls label{font-size:12px;color:var(--ink2);font-weight:600;}
+.controls input[type=password],.controls input[type=text]{border:1px solid var(--line);border-radius:7px;padding:7px 10px;font-size:13px;min-width:230px;}
+.controls select{border:1px solid var(--line);border-radius:7px;padding:7px 10px;font-size:13px;}
+.btn{border:none;border-radius:7px;padding:8px 14px;font-size:13px;font-weight:600;cursor:pointer;background:var(--blue);color:#fff;}
+.btn:hover{background:#3d68b8;}
+.btn.sec{background:#eef3fb;color:var(--navy);}
+.btn.sec:hover{background:#e0eafb;}
+.btn.red{background:#c0392b;}
+.btn.red:hover{background:#a93226;}
+.btn:disabled{opacity:.5;cursor:not-allowed;}
+.chk{display:flex;align-items:center;gap:5px;font-size:12.5px;color:var(--ink2);}
+.spacer{flex:1;}
+#status{font-size:12.5px;color:var(--ink2);padding:0 22px 4px;max-width:1080px;margin:0 auto;}
+#status.err{color:var(--down);font-weight:600;}
+nav.toc{position:sticky;top:0;z-index:10;background:#fff;border-bottom:1px solid var(--line);box-shadow:0 1px 4px rgba(0,0,0,.04);}
+nav.toc .inner{max-width:1080px;margin:0 auto;display:flex;flex-wrap:wrap;gap:4px;padding:8px 22px;}
+nav.toc a{font-size:12.5px;color:var(--ink2);text-decoration:none;padding:5px 10px;border-radius:6px;font-weight:500;white-space:nowrap;}
+nav.toc a:hover{background:#eef3fb;color:var(--navy);}
+section{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:24px 26px;margin-top:22px;scroll-margin-top:54px;}
+.sec-head{display:flex;align-items:center;gap:12px;}
+.snum{background:var(--navy);color:#fff;font-weight:700;font-size:13px;width:34px;height:34px;border-radius:8px;display:flex;align-items:center;justify-content:center;}
+h2{font-size:19px;margin:0;color:var(--ink);}
+.sub{color:var(--ink2);font-size:13.5px;margin:8px 0 18px;}
+.kpi-row{display:flex;flex-wrap:wrap;gap:14px;margin-bottom:18px;}
+.kpi{flex:1 1 230px;background:#f8fafc;border:1px solid var(--line);border-left:4px solid var(--blue);border-radius:9px;padding:13px 16px;}
+.kl{font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:var(--ink2);font-weight:600;}
+.kv{font-size:26px;font-weight:700;margin:3px 0;color:var(--navy);}
+.kc{font-size:12.5px;color:var(--ink2);}
+.badge{font-weight:700;font-size:11.5px;padding:1px 7px;border-radius:20px;}
+.badge.up{color:var(--up);background:#e7f4ec;}
+.badge.down{color:var(--down);background:#fbeae8;}
+.badge.flat{color:var(--ink2);background:#eef1f5;}
+.dash{background:linear-gradient(180deg,#fbfdff,#fff);}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:6px;}
+.gcard{margin:0;border:1px solid var(--line);border-radius:10px;padding:12px;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.04);}
+.gcard.wide{grid-column:1 / -1;}
+.gcard h4{margin:0 0 8px;font-size:12.5px;color:var(--navy);font-weight:600;}
+.gcard .cwrap{position:relative;height:210px;}
+table.dt{width:100%;border-collapse:collapse;font-size:12.5px;}
+table.dt th,table.dt td{padding:7px 9px;text-align:right;border-bottom:1px solid #eef1f5;}
+table.dt thead th{background:var(--navy);color:#fff;text-align:right;font-size:11px;text-transform:uppercase;letter-spacing:.4px;border-bottom:none;}
+table.dt thead th:first-child{text-align:left;}
+.mlabel,.clabel{text-align:left !important;font-weight:600;color:var(--ink);}
+.clabel{font-weight:500;}
+table.dt tbody tr:nth-child(even){background:#fafbfd;}
+table.dt tbody tr:hover{background:#f0f5fc;}
+tr.sum td,tr.sum th{background:#eef3fb !important;font-weight:700;border-top:2px solid var(--blue);}
+tr.sum2 td,tr.sum2 th{background:#f6f8fb !important;font-weight:600;color:var(--ink2);}
+.tot{font-weight:700;}
+.na{color:#c2c8d0;}
+.sh{display:block;font-size:9px;font-weight:500;opacity:.8;text-transform:none;letter-spacing:0;}
+.note{font-size:12.5px;color:var(--ink2);background:#fff8ed;border-left:3px solid #e0a13c;padding:9px 13px;border-radius:6px;margin-top:14px;}
+.subtbl{font-size:13px;margin:22px 0 8px;color:var(--navy);}
+footer{text-align:center;color:var(--ink2);font-size:12px;margin-top:30px;}
+/* Modal */
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(15,25,45,.55);z-index:100;align-items:flex-start;justify-content:center;overflow:auto;padding:40px 16px;}
+.modal-bg.open{display:flex;}
+.modal{background:#fff;border-radius:12px;max-width:640px;width:100%;padding:24px 26px;box-shadow:0 12px 40px rgba(0,0,0,.3);}
+.modal h3{margin:0 0 4px;color:var(--navy);font-size:18px;}
+.modal p.hint{margin:0 0 16px;font-size:12.5px;color:var(--ink2);}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px 16px;}
+.field{display:flex;flex-direction:column;gap:4px;}
+.field.full{grid-column:1 / -1;}
+.field label{font-size:11px;text-transform:uppercase;letter-spacing:.4px;color:var(--ink2);font-weight:600;}
+.field input,.field textarea{border:1px solid var(--line);border-radius:7px;padding:8px 10px;font-size:13.5px;font-family:inherit;}
+.modal .actions{display:flex;gap:10px;justify-content:flex-end;margin-top:20px;}
+#mstatus{font-size:12.5px;margin-top:10px;}
+.hidden{display:none !important;}
+.empty-hero{max-width:600px;margin:70px auto;text-align:center;color:var(--ink2);}
+.empty-hero h2{color:var(--navy);margin-bottom:10px;}
+@media(max-width:760px){.grid{grid-template-columns:1fr;}.form-grid{grid-template-columns:1fr;}table.dt{font-size:11px;}table.dt th,table.dt td{padding:5px 5px;}}
+@media print{.controls,nav.toc,#status,.no-print{display:none !important;}body{background:#fff;}section{break-inside:avoid;border:1px solid #ccc;}}
+</style>
+</head>
+<body>
+<header class="top"><div class="inner">
+<div class="ey">Admin &amp; Customer Care &middot; Monthly Operations Report</div>
+<h1>Year-over-Year Performance</h1>
+<p id="hdr-sub">Live from Airtable</p>
+</div></header>
+
+<div class="controls no-print"><div class="inner">
+<button class="btn" id="load">Refresh</button>
+<span class="spacer"></span>
+<label for="throughSel">Compare through</label>
+<select id="throughSel" title="Month to compare YTD through"></select>
+<button class="btn sec" id="entryBtn" disabled>+ Monthly Entry</button>
+<button class="btn sec" id="printBtn" disabled>⬇ Export PDF</button>
+<button class="btn sec" id="csvBtn" disabled>⬇ Export CSV</button>
+<button class="btn sec" id="htmlBtn" disabled>⬇ Export HTML</button>
+</div></div>
+<div id="status">Loading report from the server…</div>
+
+<nav class="toc no-print"><div class="inner">
+<a href="#dashboard">Summary</a>
+<a href="#towing">Towing</a>
+<a href="#incidents">Tow Incidents</a>
+<a href="#facility">Listing Issues</a>
+<a href="#customers">Customers</a>
+<a href="#reservations">Reservations</a>
+<a href="#refunds">Refunds</a>
+<a href="#expenses">Expenses</a>
+</div></nav>
+
+<div class="wrap">
+  <div id="emptyState" class="empty-hero">
+    <h2>Monthly Operations Report</h2>
+    <p>Reads your <b>Monthly Report</b> snapshot table in Airtable and overlays live towing counts from your towing log, then renders the year-over-year report.</p>
+    <p>Loading…</p>
+  </div>
+  <div id="report" class="hidden"></div>
+</div>
+
+<footer class="no-print">YourSpotRented — Monthly Reporting Tool &middot; Data source: Facility Management Database → <b>Monthly Report</b> table (+ live towing overlay from TOWED ILLEGAL PARKER)</footer>
+
+<!-- Manual Entry Modal -->
+<div class="modal-bg" id="modal">
+  <div class="modal">
+    <h3>Monthly Data Entry</h3>
+    <p class="hint">Enter the month's figures for anything not auto-sourced. Saving creates or updates that month's row in the Airtable <b>Monthly Report</b> table (matched on Year + Month). Towing is pulled live from your towing log, so you can leave it blank.</p>
+    <div class="form-grid">
+      <div class="field"><label>Year *</label><input type="number" id="f_year" min="2020" max="2100" step="1"></div>
+      <div class="field"><label>Month * (1–12)</label><input type="number" id="f_month" min="1" max="12" step="1"></div>
+      <div class="field"><label>Towing (optional — live)</label><input type="number" id="f_towing" step="1"></div>
+      <div class="field"><label>Tow Incidents</label><input type="number" id="f_towinc" step="1"></div>
+      <div class="field"><label>Listing Issues</label><input type="number" id="f_listing" step="1"></div>
+      <div class="field"><label>Customers Assisted</label><input type="number" id="f_cust" step="1"></div>
+      <div class="field"><label>Reservations</label><input type="number" id="f_res" step="1"></div>
+      <div class="field"><label>Refunds Count</label><input type="number" id="f_refc" step="1"></div>
+      <div class="field"><label>Refunds Amount ($)</label><input type="number" id="f_refa" step="0.01"></div>
+      <div class="field"><label>Expenses Total ($)</label><input type="number" id="f_exp" step="0.01"></div>
+      <div class="field"><label>Exp — Customer Reimbursements ($)</label><input type="number" id="f_ereimb" step="0.01"></div>
+      <div class="field"><label>Exp — Dues / Subscription ($)</label><input type="number" id="f_edues" step="0.01"></div>
+      <div class="field"><label>Exp — Parking Enforcement ($)</label><input type="number" id="f_epark" step="0.01"></div>
+      <div class="field"><label>Exp — Snow Removal ($)</label><input type="number" id="f_esnow" step="0.01"></div>
+      <div class="field full"><label>Notes</label><textarea id="f_notes" rows="2"></textarea></div>
+    </div>
+    <div id="mstatus"></div>
+    <div class="actions">
+      <button class="btn sec" id="mCancel">Cancel</button>
+      <button class="btn" id="mSave">Save to Airtable</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ================= CONFIG ================= */
+const BASE_ID = "app9iYUN8J3z2wjXN";
+const MONTHLY_TABLE = "tblJ7i6J3wxf03Kxk";     // Monthly Report (snapshot)
+const TOWING_TABLE  = "tblLgNB8RQvy4xiW5";     // TOWED ILLEGAL PARKER (live)
+const TOWING_DATE_FIELD = "DATE";
+const MONTHS = ["JAN","FEB","MAR","APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC"];
+const MONTHS_LONG = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+
+// Metric definitions: which Monthly Report field, how to format, whether currency
+const METRICS = {
+  towing:   {field:"Towing"},
+  towinc:   {field:"Tow Incidents"},
+  listing:  {field:"Listing Issues"},
+  cust:     {field:"Customers Assisted"},
+  res:      {field:"Reservations"},
+  refc:     {field:"Refunds Count"},
+  refa:     {field:"Refunds Amount", cur:true},
+  exp:      {field:"Expenses Total", cur:true},
+};
+// Expense category Jan–Jul fallback constants (from July 2026 report), by year
+const CAT_FALLBACK = {
+  2024:{"Customer Reimbursements / Rewards":4743.08,"Dues / Subscription":30202.11,"Parking Enforcement / Installation":8437.67,"Snow Removal":15837.00},
+  2025:{"Customer Reimbursements / Rewards":4224.33,"Dues / Subscription":16799.99,"Parking Enforcement / Installation":2520.00,"Snow Removal":124115.60},
+  2026:{"Customer Reimbursements / Rewards":6916.08,"Dues / Subscription":27072.38,"Parking Enforcement / Installation":9360.96,"Snow Removal":197834.67},
+};
+const CAT_FIELD = {"Customer Reimbursements / Rewards":"Exp Customer Reimbursements","Dues / Subscription":"Exp Dues Subscription","Parking Enforcement / Installation":"Exp Parking Enforcement","Snow Removal":"Exp Snow Removal"};
+
+/* ================= STATE ================= */
+let TOKEN = "";
+let DATA = {};            // year -> {month(1-12) -> {metric:value}, _cat:{cat:val}}
+let YEARS = [];           // sorted ascending
+let LIVE_TOW = {};        // year -> [12 monthly counts]
+let THROUGH = 7;          // compare-through month (1-12)
+const charts = [];
+
+/* ================= HELPERS ================= */
+const $ = id => document.getElementById(id);
+function setStatus(msg, err){ const s=$("status"); s.innerHTML=msg; s.className = err?"err":""; }
+const fmtInt = n => (n==null||isNaN(n))? null : Math.round(n).toLocaleString("en-US");
+const fmtCur = n => (n==null||isNaN(n))? null : "$"+Number(n).toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2});
+function pct(cur, prev){
+  if(prev==null||prev===0||cur==null) return null;
+  return ((cur-prev)/prev)*100;
+}
+function badge(p){
+  if(p==null) return '<span class="badge flat">n/a</span>';
+  const cls = p>0.05?"up":(p<-0.05?"down":"flat");
+  const arw = p>0.05?"&#9650;":(p<-0.05?"&#9660;":"&#9644;");
+  return `<span class="badge ${cls}">${arw} ${Math.abs(p).toFixed(1)}%</span>`;
+}
+
+/* ================= SERVER API ================= */
+let LIVE = {};
+async function loadAll(){
+  setStatus("Loading report from the server (aggregating live Airtable data)…");
+  const r = await fetch("/api/data");
+  if(!r.ok){ const t=await r.text(); throw new Error(`Server ${r.status}: ${t.slice(0,200)}`); }
+  const j = await r.json();
+  if(j.error) throw new Error(j.error);
+  buildData(j.monthly||[]);
+  applyLive(j.live||{});
+}
+function buildData(mrecs){
+  DATA={};
+  mrecs.forEach(r=>{
+    const f=r.fields; const y=f.Year, m=f.Month;
+    if(!y||!m) return;
+    DATA[y]=DATA[y]||{_cat:{}};
+    DATA[y][m]=DATA[y][m]||{};
+    for(const [k,def] of Object.entries(METRICS)){
+      if(f[def.field]!=null) DATA[y][m][k]=f[def.field];
+    }
+    for(const [cat,fld] of Object.entries(CAT_FIELD)){
+      if(f[fld]!=null){ DATA[y]._cat[cat]=(DATA[y]._cat[cat]||0)+f[fld]; }
+    }
+  });
+  YEARS = Object.keys(DATA).map(Number).sort((a,b)=>a-b);
+}
+function ensureCell(y,m){ DATA[y]=DATA[y]||{_cat:{}}; DATA[y][m]=DATA[y][m]||{}; return DATA[y][m]; }
+/* Overlay live-aggregated Airtable data. Live overrides the snapshot where present. */
+function applyLive(live){
+  LIVE = live || {};
+  // Towing — from the successful tow log (TOWED ILLEGAL PARKER)
+  Object.entries(LIVE.towing||{}).forEach(([k,v])=>{ ensureCell(+k.slice(0,4),+k.slice(5,7)).towing=v; });
+  // Customers Assisted — from RingCentral Conversations
+  Object.entries(LIVE.customers||{}).forEach(([k,v])=>{ ensureCell(+k.slice(0,4),+k.slice(5,7)).cust=v; });
+  // Expenses total — only for years that have Management-Expense data
+  const ey=new Set(LIVE.expYears||[]);
+  Object.entries(LIVE.expTotal||{}).forEach(([k,v])=>{ const y=+k.slice(0,4); if(ey.has(y)) ensureCell(y,+k.slice(5,7)).exp=v; });
+  YEARS = Object.keys(DATA).map(Number).sort((a,b)=>a-b);
+}
+
+/* value getter */
+function val(year, month, metric){
+  return (DATA[year] && DATA[year][month] && DATA[year][month][metric]!=null) ? DATA[year][month][metric] : null;
+}
+function monthsArray(year, metric){ return Array.from({length:12},(_,i)=>val(year,i+1,metric)); }
+function sumRange(year, metric, m0, m1){
+  let s=0, any=false;
+  for(let m=m0;m<=m1;m++){ const v=val(year,m,metric); if(v!=null){s+=v;any=true;} }
+  return any?s:null;
+}
+function fullYear(year, metric){ return sumRange(year,metric,1,12); }
+function yearComplete(year, metric){ // 12 months present?
+  for(let m=1;m<=12;m++){ if(val(year,m,metric)==null) return false; } return true;
+}
+function latestMonthWithData(year){
+  let last=0;
+  for(let m=1;m<=12;m++){ if(DATA[year]&&DATA[year][m]&&Object.keys(DATA[year][m]).length) last=m; }
+  return last;
+}
+
+/* ================= RENDER ================= */
+function currentYear(){ return YEARS[YEARS.length-1]; }
+function fmt(metric,v){ return METRICS[metric].cur? fmtCur(v): fmtInt(v); }
+
+function kpiCard(label, cur, prev, curYear, prevYear, metric){
+  const p = pct(cur,prev);
+  const cv = fmt(metric,cur) ?? "—";
+  return `<div class="kpi"><div class="kl">${label} &middot; ${curYear} YTD (Jan–${MONTHS[THROUGH-1]})</div>
+    <div class="kv">${cv}</div>
+    <div class="kc">${badge(p)} vs ${prevYear} YTD (${fmt(metric,prev)??"—"})</div></div>`;
+}
+
+function metricTable(metric, yearsShown){
+  const cur=currentYear();
+  let head = `<tr><th>MONTH</th>${yearsShown.map(y=>`<th>${y}</th>`).join("")}</tr>`;
+  let body="";
+  for(let i=0;i<12;i++){
+    body += `<tr><th class="mlabel">${MONTHS[i]}</th>` + yearsShown.map(y=>{
+      const v=val(y,i+1,metric);
+      return `<td>${v==null?'<span class="na">&mdash;</span>':fmt(metric,v)}</td>`;
+    }).join("") + `</tr>`;
+  }
+  // YTD row
+  body += `<tr class="sum"><th class="mlabel">YTD (Jan–${MONTHS[THROUGH-1]})</th>` + yearsShown.map(y=>{
+    const v=sumRange(y,metric,1,THROUGH);
+    return `<td class="tot">${v==null?'<span class="na">&mdash;</span>':fmt(metric,v)}</td>`;
+  }).join("") + `</tr>`;
+  // Full-year row
+  body += `<tr class="sum2"><th class="mlabel">Full-Year Total</th>` + yearsShown.map(y=>{
+    const v = yearComplete(y,metric)? fullYear(y,metric): null;
+    return `<td class="tot">${v==null?'<span class="na">&mdash;</span>':fmt(metric,v)}</td>`;
+  }).join("") + `</tr>`;
+  return `<table class="dt"><thead>${head}</thead><tbody>${body}</tbody></table>`;
+}
+
+function yearsWith(metric){ return YEARS.filter(y=> monthsArray(y,metric).some(v=>v!=null)); }
+
+function section(num,id,title,sub,metric,extra,kpiLabel){
+  const cur=currentYear(), prev=cur-1;
+  const yearsShown = yearsWith(metric);
+  const curYTD=sumRange(cur,metric,1,THROUGH), prevYTD=sumRange(prev,metric,1,THROUGH);
+  let kpis = kpiCard(kpiLabel||title, curYTD, prevYTD, cur, prev, metric);
+  return `<section id="${id}">
+    <div class="sec-head"><span class="snum">${num}</span><h2>${title}</h2></div>
+    <p class="sub">${sub}</p>
+    <div class="kpi-row">${kpis}</div>
+    ${metricTable(metric, yearsShown)}
+    ${extra||""}</section>`;
+}
+
+function refundsSection(num){
+  const cur=currentYear(), prev=cur-1;
+  const yearsShown = YEARS.filter(y=> monthsArray(y,'refc').some(v=>v!=null) || monthsArray(y,'refa').some(v=>v!=null));
+  const cA=sumRange(cur,'refa',1,THROUGH), pA=sumRange(prev,'refa',1,THROUGH);
+  const cC=sumRange(cur,'refc',1,THROUGH), pC=sumRange(prev,'refc',1,THROUGH);
+  let head=`<tr><th>MONTH</th>`+yearsShown.map(y=>`<th>${y}<span class="sh">count</span></th><th>${y}<span class="sh">amount</span></th>`).join("")+`</tr>`;
+  let body="";
+  for(let i=0;i<12;i++){
+    body+=`<tr><th class="mlabel">${MONTHS[i]}</th>`+yearsShown.map(y=>{
+      const c=val(y,i+1,'refc'), a=val(y,i+1,'refa');
+      return `<td>${c==null?'<span class="na">&mdash;</span>':fmtInt(c)}</td><td>${a==null?'<span class="na">&mdash;</span>':fmtCur(a)}</td>`;
+    }).join("")+`</tr>`;
+  }
+  body+=`<tr class="sum"><th class="mlabel">YTD (Jan–${MONTHS[THROUGH-1]})</th>`+yearsShown.map(y=>{
+    const c=sumRange(y,'refc',1,THROUGH), a=sumRange(y,'refa',1,THROUGH);
+    return `<td class="tot">${c==null?'<span class="na">&mdash;</span>':fmtInt(c)}</td><td class="tot">${a==null?'<span class="na">&mdash;</span>':fmtCur(a)}</td>`;
+  }).join("")+`</tr>`;
+  body+=`<tr class="sum2"><th class="mlabel">Full-Year Total</th>`+yearsShown.map(y=>{
+    const c=yearComplete(y,'refc')?fullYear(y,'refc'):null, a=yearComplete(y,'refa')?fullYear(y,'refa'):null;
+    return `<td class="tot">${c==null?'<span class="na">&mdash;</span>':fmtInt(c)}</td><td class="tot">${a==null?'<span class="na">&mdash;</span>':fmtCur(a)}</td>`;
+  }).join("")+`</tr>`;
+  return `<section id="refunds">
+    <div class="sec-head"><span class="snum">${num}</span><h2>Refunds</h2></div>
+    <p class="sub">Total refund count and amount per month, year-over-year. (Refund table + SpotHero refunds.)</p>
+    <div class="kpi-row">
+      ${kpiCard("Refund Amount", cA, pA, cur, prev, 'refa')}
+      ${kpiCard("Refund Count", cC, pC, cur, prev, 'refc')}
+    </div>
+    <table class="dt">${`<thead>${head}</thead>`}<tbody>${body}</tbody></table>
+  </section>`;
+}
+
+function expenseCategories(){
+  const cur=currentYear();
+  const yearsShown = yearsWith('exp');
+  const cats = Object.keys(CAT_FIELD);
+  const wlabel = `Jan–${MONTHS[THROUGH-1]}`;
+  // Live years (with Management-Expense data) compute from live category records; prior years use report figures.
+  function catVal(y,cat){
+    if(LIVE.expYears && LIVE.expYears.includes(y) && LIVE.expCats && LIVE.expCats[cat]){
+      let s=0;
+      for(let m=1;m<=THROUGH;m++){ const k=y+"-"+String(m).padStart(2,"0"); const v=LIVE.expCats[cat][k]; if(v!=null) s+=v; }
+      return s;
+    }
+    if(CAT_FALLBACK[y] && CAT_FALLBACK[y][cat]!=null) return CAT_FALLBACK[y][cat];
+    return null;
+  }
+  let head=`<tr><th>CATEGORY</th>`+yearsShown.map(y=>`<th>${y}<span class="sh">${wlabel}</span></th>`).join("")+`</tr>`;
+  let body="";
+  cats.forEach(cat=>{
+    body+=`<tr><th class="clabel">${cat}</th>`+yearsShown.map(y=>{
+      const v=catVal(y,cat); return `<td>${v==null?'<span class="na">&mdash;</span>':fmtCur(v)}</td>`;
+    }).join("")+`</tr>`;
+  });
+  body+=`<tr class="sum"><th class="clabel">Total Expenses</th>`+yearsShown.map(y=>{
+    let s=0,any=false; cats.forEach(cat=>{const v=catVal(y,cat); if(v!=null){s+=v;any=true;}});
+    return `<td class="tot">${any?fmtCur(s):'<span class="na">&mdash;</span>'}</td>`;
+  }).join("")+`</tr>`;
+  return `<h3 class="subtbl">Total by Category (${wlabel})</h3><p class="sub" style="margin-top:-2px">Current year pulled live from Airtable — Customer Reimbursements/Rewards from Refunds &amp; Reimbursement (REWARD, REIMBURSEMENT); Dues/Subscription, Parking Enforcement/Installation (incl. Parkpliant), and Snow Removal from Management Expenses. Prior years show the report's Jan–Jul figures.</p><table class="dt"><thead>${head}</thead><tbody>${body}</tbody></table>`;
+}
+
+function autoNote(metric, label){
+  const cur=currentYear(), prev=cur-1;
+  const c=sumRange(cur,metric,1,THROUGH), p=sumRange(prev,metric,1,THROUGH);
+  if(c==null||p==null) return "";
+  const pc=pct(c,p);
+  const dir = pc>0?"up":"down";
+  const disp = METRICS[metric].cur?fmtCur:fmtInt;
+  return `<p class="note">${cur} ${label} (Jan–${MONTHS[THROUGH-1]}) totaled ${disp(c)}, ${dir} ${Math.abs(pc).toFixed(1)}% versus the same window in ${prev} (${disp(p)}).</p>`;
+}
+
+/* ---- charts ---- */
+const YEAR_COLORS = {}; const PALETTE=["#9db8e0","#4c7bd1","#1f3a68","#e0a13c","#1f7a4d"];
+function colorFor(y,i){ return PALETTE[i % PALETTE.length]; }
+function makeChart(canvasId, metric, isCur){
+  const yrs = yearsWith(metric);
+  const ds = yrs.map((y,i)=>({label:String(y), data:monthsArray(y,metric).map(v=>v==null?null:v),
+    backgroundColor:colorFor(y,i), borderColor:colorFor(y,i), borderWidth:1}));
+  const ctx=$(canvasId); if(!ctx) return;
+  charts.push(new Chart(ctx,{type:"bar",data:{labels:MONTHS,datasets:ds},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{position:"bottom",labels:{boxWidth:12,font:{size:10}}}},
+      scales:{y:{beginAtZero:true,ticks:{font:{size:10},callback:v=>METRICS[metric].cur?("$"+(v>=1000?(v/1000)+"k":v)):v}},x:{ticks:{font:{size:9}}}}}}));
+}
+
+function dashboard(){
+  const specs=[
+    ["c_towing","towing","01 · Towing Records"],
+    ["c_towinc","towinc","02 · Tow Incident Investigations"],
+    ["c_listing","listing","03 · Relayed &amp; Resolved Listing Issues"],
+    ["c_cust","cust","04 · Customers Assisted"],
+    ["c_res","res","05 · Reservations"],
+    ["c_refa","refa","06 · Refund Amount"],
+    ["c_refc","refc","06 · Refund Count"],
+    ["c_exp","exp","07 · Total Expenses"],
+  ];
+  const cards = specs.map(s=>`<figure class="gcard"><h4>${s[2]}</h4><div class="cwrap"><canvas id="${s[0]}"></canvas></div></figure>`).join("");
+  return {html:`<section id="dashboard" class="dash">
+      <div class="sec-head"><span class="snum">&#9733;</span><h2>Visual Summary — Year over Year</h2></div>
+      <p class="sub">All metrics at a glance, month by month across years. Detailed tables follow below.</p>
+      <div class="grid">${cards}</div></section>`, specs};
+}
+
+function render(){
+  const cur=currentYear(), prev=cur-1;
+  $("hdr-sub").innerHTML = `Reporting window: January – ${MONTHS_LONG[THROUGH-1]} &middot; ${YEARS.join(" vs ")} &nbsp;(${cur} = Jan–${MONTHS[THROUGH-1]} actuals)`;
+  const dash=dashboard();
+  let html = dash.html;
+  html += section("01","towing","Towing Records","Towed illegal vehicles, compared month-by-month across years. Current year auto-refreshed live from the towing log.","towing",null,"Vehicles Towed");
+  html += section("02","incidents","Tow Incident Investigations","Investigations into towing incidents.","towinc",null,"Investigations");
+  html += section("03","facility","Relayed and Resolved Listing Issues","Listing issues relayed to and resolved with Sales.","listing", autoNote('listing','listing issues'),"Issues Relayed");
+  html += section("04","customers","Customers Assisted","Customer interactions handled per month — pulled live from RingCentral Conversations.","cust",null,"Customers Assisted");
+  html += section("05","reservations","Reservations","Total reservations (transient + monthly) per month.","res",null,"Total Reservations");
+  html += refundsSection("06");
+  html += section("07","expenses","Expenses","Total expenses per month (sum of the four categories below) — pulled live from Airtable for the current year.","exp", expenseCategories()+autoNote('exp','total expenses'),"Total Expenses");
+  $("report").innerHTML = html;
+  $("report").classList.remove("hidden");
+  $("emptyState").classList.add("hidden");
+  // charts
+  charts.forEach(c=>{try{c.destroy();}catch(e){}}); charts.length=0;
+  if(typeof Chart==="undefined"){
+    document.querySelectorAll(".cwrap").forEach(w=>w.innerHTML='<div style="color:#5a6473;font-size:12px;padding:20px;text-align:center">Charts need an internet connection (Chart.js). Tables above are complete.</div>');
+  } else {
+    dash.specs.forEach(s=>{ try{ makeChart(s[0],s[1]); }catch(e){ console.warn("chart",s[0],e); } });
+  }
+}
+
+/* ================= THROUGH SELECTOR ================= */
+function fillThrough(){
+  const sel=$("throughSel"); sel.innerHTML="";
+  for(let m=1;m<=12;m++){ const o=document.createElement("option"); o.value=m; o.textContent=MONTHS_LONG[m-1]; sel.appendChild(o); }
+  // default to latest month with data in current year
+  const cur=currentYear();
+  THROUGH = latestMonthWithData(cur) || 12;
+  sel.value=THROUGH;
+}
+
+/* ================= EVENTS ================= */
+async function doLoad(){
+  $("load").disabled=true; setStatus("Loading report from the server…");
+  try{
+    await loadAll();
+    if(!YEARS.length){ setStatus("Connected, but the Monthly Report table is empty.", true); $("load").disabled=false; return; }
+    fillThrough();
+    render();
+    ["entryBtn","printBtn","csvBtn","htmlBtn"].forEach(id=>$(id).disabled=false);
+    setStatus(`Loaded ${YEARS.length} year(s): ${YEARS.join(", ")}. Towing overlaid live from your towing log. Press Refresh to reload.`);
+  }catch(e){
+    console.error(e);
+    setStatus("Error: "+e.message, true);
+  }
+  $("load").disabled=false;
+}
+$("load").addEventListener("click", doLoad);
+$("throughSel").addEventListener("change", e=>{ THROUGH=+e.target.value; if(YEARS.length) render(); });
+$("printBtn").addEventListener("click", ()=>window.print());
+$("csvBtn").addEventListener("click", exportCSV);
+$("htmlBtn").addEventListener("click", exportHTML);
+
+/* ---- Manual entry ---- */
+function catLiveVal(y,m,cat){
+  if(LIVE.expCats && LIVE.expCats[cat]){ const k=y+"-"+String(m).padStart(2,"0"); const v=LIVE.expCats[cat][k]; if(v!=null) return Math.round(v*100)/100; }
+  return null;
+}
+/* Prefill the entry form with the month's existing values (snapshot + live). */
+function prefillEntry(){
+  const y=parseInt($("f_year").value), m=parseInt($("f_month").value);
+  const set=(id,v)=>{ $(id).value=(v==null||isNaN(v))?"":v; };
+  const ids=["f_towing","f_towinc","f_listing","f_cust","f_res","f_refc","f_refa","f_exp","f_ereimb","f_edues","f_epark","f_esnow"];
+  if(!y||!m){ ids.forEach(id=>$(id).value=""); return; }
+  set("f_towing", val(y,m,'towing'));
+  set("f_towinc", val(y,m,'towinc'));
+  set("f_listing", val(y,m,'listing'));
+  set("f_cust", val(y,m,'cust'));
+  set("f_res", val(y,m,'res'));
+  set("f_refc", val(y,m,'refc'));
+  set("f_refa", val(y,m,'refa'));
+  set("f_exp", val(y,m,'exp'));
+  set("f_ereimb", catLiveVal(y,m,'Customer Reimbursements / Rewards'));
+  set("f_edues", catLiveVal(y,m,'Dues / Subscription'));
+  set("f_epark", catLiveVal(y,m,'Parking Enforcement / Installation'));
+  set("f_esnow", catLiveVal(y,m,'Snow Removal'));
+}
+$("entryBtn").addEventListener("click", ()=>{
+  const cur=currentYear(); $("f_year").value=cur; $("f_month").value=latestMonthWithData(cur)||1;
+  $("f_notes").value="";
+  prefillEntry();
+  $("mstatus").innerHTML='<span style="color:#5a6473">Existing values are prefilled from Airtable — edit and Save, or change Year/Month to load a different period. (Towing, Customers &amp; Expenses are auto-sourced live.)</span>';
+  $("modal").classList.add("open");
+});
+$("f_year").addEventListener("change", prefillEntry);
+$("f_month").addEventListener("change", prefillEntry);
+$("mCancel").addEventListener("click", ()=>$("modal").classList.remove("open"));
+$("modal").addEventListener("click", e=>{ if(e.target===$("modal")) $("modal").classList.remove("open"); });
+
+$("mSave").addEventListener("click", async ()=>{
+  const y=parseInt($("f_year").value), m=parseInt($("f_month").value);
+  if(!y||!m||m<1||m>12){ $("mstatus").innerHTML='<span style="color:#c0392b">Enter a valid year and month (1–12).</span>'; return; }
+  const num=id=>{ const v=$(id).value.trim(); return v===""?null:Number(v); };
+  const fields={ "Period":`${y}-${String(m).padStart(2,"0")}`, "Year":y, "Month":m };
+  const map={f_towing:"Towing",f_towinc:"Tow Incidents",f_listing:"Listing Issues",f_cust:"Customers Assisted",f_res:"Reservations",f_refc:"Refunds Count",f_refa:"Refunds Amount",f_exp:"Expenses Total",f_ereimb:"Exp Customer Reimbursements",f_edues:"Exp Dues Subscription",f_epark:"Exp Parking Enforcement",f_esnow:"Exp Snow Removal"};
+  for(const [id,fld] of Object.entries(map)){ const v=num(id); if(v!=null) fields[fld]=v; }
+  const notes=$("f_notes").value.trim(); if(notes) fields["Notes"]=notes;
+  $("mstatus").textContent="Saving…"; $("mSave").disabled=true;
+  try{
+    const r=await fetch("/api/entry",{ method:"PATCH", headers:{"Content-Type":"application/json"}, body:JSON.stringify({fields})});
+    const t=await r.text();
+    if(!r.ok){ let m=t; try{m=JSON.parse(t).error;}catch(_){ } throw new Error(m); }
+    $("mstatus").innerHTML='<span style="color:#1f7a4d;font-weight:600">Saved. Reloading report…</span>';
+    await loadAll(); fillThrough(); render();
+    setTimeout(()=>$("modal").classList.remove("open"),700);
+  }catch(e){
+    $("mstatus").innerHTML='<span style="color:#c0392b">Save failed — '+e.message+'</span>';
+  }
+  $("mSave").disabled=false;
+});
+
+/* ---- CSV export ---- */
+function exportCSV(){
+  const cols=["Year","Month","Towing","Tow Incidents","Listing Issues","Customers Assisted","Reservations","Refunds Count","Refunds Amount","Expenses Total"];
+  const keys=["_y","_m","towing","towinc","listing","cust","res","refc","refa","exp"];
+  let rows=[cols.join(",")];
+  YEARS.forEach(y=>{ for(let m=1;m<=12;m++){ if(!(DATA[y]&&DATA[y][m])) continue;
+    const line=keys.map(k=>{ if(k==="_y")return y; if(k==="_m")return m; const v=val(y,m,k); return v==null?"":v; });
+    rows.push(line.join(","));
+  }});
+  const blob=new Blob([rows.join("\n")],{type:"text/csv"});
+  const a=document.createElement("a"); a.href=URL.createObjectURL(blob);
+  a.download=`YSR_Monthly_Report_${currentYear()}.csv`; a.click();
+}
+
+/* ---- HTML export: self-contained snapshot (charts baked in as images) ---- */
+function exportHTML(){
+  const styleEl=document.querySelector('style');
+  const headerEl=document.querySelector('header.top');
+  const navEl=document.querySelector('nav.toc');
+  const rep=document.getElementById('report');
+  if(!rep||rep.classList.contains('hidden')){ alert('Load the report first, then export.'); return; }
+  const clone=rep.cloneNode(true);
+  const oc=rep.querySelectorAll('canvas');
+  const cc=clone.querySelectorAll('canvas');
+  cc.forEach((c,i)=>{
+    let src=''; try{ src=oc[i]?oc[i].toDataURL('image/png'):''; }catch(e){}
+    const img=document.createElement('img'); img.src=src;
+    img.style.width='100%'; img.style.height='auto'; img.style.display='block';
+    const wrap=c.parentNode; wrap.style.height='auto'; wrap.style.position='static';
+    wrap.replaceChild(img,c);
+  });
+  const win = document.getElementById('hdr-sub') ? document.getElementById('hdr-sub').textContent : '';
+  const doc='<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8">'+
+    '<meta name="viewport" content="width=device-width, initial-scale=1.0">'+
+    '<title>Monthly Operations Report — Year-over-Year</title>'+styleEl.outerHTML+
+    '</head><body>'+headerEl.outerHTML+(navEl?navEl.outerHTML:'')+
+    '<div class="wrap">'+clone.innerHTML+'</div>'+
+    '<footer>YourSpotRented — Monthly Operations Report · self-contained export · '+win+'</footer>'+
+    '</body></html>';
+  const blob=new Blob([doc],{type:'text/html'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
+  a.download='YSR_Monthly_Report_'+currentYear()+'.html'; a.click();
+}
+
+/* ---- init: auto-load from server ---- */
+window.addEventListener("DOMContentLoaded", ()=>setTimeout(doLoad,50));
+</script>
+</body>
+</html>
